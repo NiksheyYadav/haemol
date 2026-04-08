@@ -1,6 +1,8 @@
 import type { AnalysisResult, AboutStats, ExtractedParam, MetricsSnapshot, PrivacyPolicy, ReportRecord } from "@biomarkly/contracts";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const DEFAULT_API_BASE = "/api/backend";
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL?.trim();
+const API_URL = (RAW_API_URL && RAW_API_URL.length > 0 ? RAW_API_URL : DEFAULT_API_BASE).replace(/\/+$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {

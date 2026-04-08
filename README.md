@@ -2,6 +2,19 @@
 
 Biomarkly is a monorepo with a Next.js frontend and a FastAPI backend for blood-report extraction, specialist analysis, multilingual narration, and privacy-aware report lifecycle management.
 
+## Production deploy
+
+For Vercel, deploy only the frontend and point it at a separately hosted Biomarkly API.
+
+Recommended setup:
+- Set `API_SERVER_URL=https://your-api-domain` in the Vercel project.
+- Leave `NEXT_PUBLIC_API_URL` unset in Vercel so the frontend uses the built-in `/api/backend` proxy.
+- Keep the backend deployed on App Runner, ECS, Render, Railway, or another Python host.
+
+Why this matters:
+- If `NEXT_PUBLIC_API_URL` is missing and no proxy exists, the app can fall back to `localhost`, which breaks parsing and uploads in production.
+- The `/api/backend/*` rewrite keeps frontend requests same-origin on Vercel and forwards them to your real API.
+
 ## Local development
 
 ```bash
