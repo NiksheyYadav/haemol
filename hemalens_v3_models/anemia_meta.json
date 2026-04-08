@@ -1,0 +1,32 @@
+{
+  "model_name": "anemia",
+  "version": "2026.03",
+  "features": [
+    "wbc",
+    "rbc",
+    "hgb",
+    "hct",
+    "mcv",
+    "mch",
+    "mchc",
+    "plt"
+  ],
+  "labels": [
+    "Healthy",
+    "Iron deficiency anemia",
+    "Leukemia",
+    "Leukemia with thrombocytopenia",
+    "Macrocytic anemia",
+    "Normocytic hypochromic anemia",
+    "Normocytic normochromic anemia",
+    "Other microcytic anemia",
+    "Thrombocytopenia"
+  ],
+  "metrics": {
+    "f1": 0.9730311977695905,
+    "accuracy": 0.9727626459143969,
+    "roc_auc": null
+  },
+  "format": "sklearn_pipeline",
+  "input_type": "tabular"
+}

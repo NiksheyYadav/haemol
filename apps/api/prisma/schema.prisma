@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String?
+  locale     String   @default("en")
+  consent_at DateTime?
+  created_at DateTime @default(now())
+  reports    Report[]
+}
+
+model Report {
+  id                String          @id @default(uuid())
+  user_id           String?
+  source_type       String
+  locale            String          @default("en")
+  sex               String
+  age               Int
+  file_name         String?
+  file_url          String?
+  raw_text          String?
+  extraction_status String          @default("pending")
+  extraction_step   String          @default("queued")
+  status            String          @default("pending")
+  consent_given     Boolean         @default(false)
+  error_message     String?
+  created_at        DateTime        @default(now())
+  user              User?           @relation(fields: [user_id], references: [id])
+  extracted_params  ExtractedParam[]
+  analyses          Analysis[]
+}
+
+model ExtractedParam {
+  id                  String  @id @default(uuid())
+  report_id           String
+  name                String
+  canonical_name      String
+  value               Float
+  unit                String  @default("")
+  confidence          Float   @default(0)
+  is_flagged          Boolean @default(false)
+  ref_range_key       String  @default("")
+  category            String  @default("General")
+  raw_reference_range String  @default("")
+  range_min           Float?
+  range_max           Float?
+  delta_from_range    Float?
+  note                String?
+  report              Report  @relation(fields: [report_id], references: [id], onDelete: Cascade)
+}
+
+model Analysis {
+  id                String    @id @default(uuid())
+  report_id         String
+  model_name        String    @default("ensemble")
+  model_version     String    @default("v3")
+  summary           String    @default("")
+  status            String    @default("pending")
+  conditions        Json
+  abnormal_params   Json
+  specialist_models Json
+  recommendations   Json
+  confidence_scores Json
+  created_at        DateTime  @default(now())
+  report            Report    @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  audio_jobs        AudioJob[]
+}
+
+model AudioJob {
+  id            String   @id @default(uuid())
+  analysis_id   String
+  language      String
+  audio_url     String?
+  status        String   @default("pending")
+  fallback_text String?
+  created_at    DateTime @default(now())
+  analysis      Analysis @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entity_id   String
+  entity_type String
+  event       String
+  detail      Json
+  ts          DateTime @default(now())
+}
+
+model Feedback {
+  id          String   @id @default(uuid())
+  analysis_id String
+  sentiment   String
+  text        String?
+  created_at  DateTime @default(now())
+}
+
+model EventLog {
+  id          String   @id @default(uuid())
+  name        String
+  report_id   String?
+  analysis_id String?
+  payload     Json
+  created_at  DateTime @default(now())
+}

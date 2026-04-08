@@ -1,0 +1,19 @@
+{
+  "name": "biomarkly",
+  "version": "3.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @biomarkly/web run dev",
+    "dev": "npm run dev:web",
+    "build:web": "npm --workspace @biomarkly/web run build",
+    "start": "npm run build:web && npm --workspace @biomarkly/web start",
+    "lint:web": "npm --workspace @biomarkly/web run lint",
+    "typecheck:web": "npm --workspace @biomarkly/web run typecheck",
+    "check:drift": "python scripts/check_schema_drift.py",
+    "ci": "npm run lint:web && npm run typecheck:web && npm run check:drift"
+  }
+}

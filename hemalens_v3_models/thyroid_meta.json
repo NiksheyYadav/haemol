@@ -1,0 +1,49 @@
+{
+  "model_name": "thyroid",
+  "version": "2026.03",
+  "features": [
+    "age",
+    "on_thyroxine",
+    "query_on_thyroxine",
+    "on_antithyroid_meds",
+    "sick",
+    "pregnant",
+    "thyroid_surgery",
+    "i131_treatment",
+    "query_hypothyroid",
+    "query_hyperthyroid",
+    "lithium",
+    "goitre",
+    "tumor",
+    "hypopituitary",
+    "psych",
+    "tsh_measured",
+    "tsh",
+    "t3_measured",
+    "t3",
+    "tt4_measured",
+    "tt4",
+    "t4u_measured",
+    "t4u",
+    "fti_measured",
+    "fti",
+    "tbg_measured",
+    "tbg",
+    "patient_id"
+  ],
+  "labels": [
+    "STMW",
+    "SVHC",
+    "SVHD",
+    "SVI",
+    "WEST",
+    "other"
+  ],
+  "metrics": {
+    "f1": 0.6793176252437266,
+    "accuracy": 0.691008174386921,
+    "roc_auc": null
+  },
+  "format": "sklearn_pipeline",
+  "input_type": "tabular"
+}

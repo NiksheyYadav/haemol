@@ -1,0 +1,27 @@
+{
+  "model_name": "liver",
+  "version": "2026.03",
+  "features": [
+    "age",
+    "gender",
+    "total_bilirubin",
+    "direct_bilirubin",
+    "alkaline_phosphotase",
+    "alamine_aminotransferase",
+    "aspartate_aminotransferase",
+    "total_protiens",
+    "albumin",
+    "albumin_and_globulin_ratio"
+  ],
+  "labels": [
+    "Normal",
+    "Liver Disease"
+  ],
+  "metrics": {
+    "f1": 0.717709818512673,
+    "accuracy": 0.7350427350427351,
+    "roc_auc": 0.7732104890148831
+  },
+  "format": "sklearn_pipeline",
+  "input_type": "tabular"
+}

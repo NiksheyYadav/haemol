@@ -1,6 +1,6 @@
-# HemaLens v3
+# Biomarkly
 
-HemaLens v3 is a monorepo with a Next.js frontend and a FastAPI backend for blood-report extraction, specialist analysis, multilingual narration, and privacy-aware report lifecycle management.
+Biomarkly is a monorepo with a Next.js frontend and a FastAPI backend for blood-report extraction, specialist analysis, multilingual narration, and privacy-aware report lifecycle management.
 
 ## Local development
 
@@ -28,12 +28,11 @@ Required AWS IAM permissions for the service account:
 - `s3:ListBucket`
 
 Resource scope:
-- `arn:aws:s3:::hemalens-uploads`
-- `arn:aws:s3:::hemalens-uploads/*`
+- `arn:aws:s3:::biomarkly-uploads`
+- `arn:aws:s3:::biomarkly-uploads/*`
 
 ## Verify local S3
 
 ```bash
-aws s3 ls s3://hemalens-uploads --endpoint-url http://localhost:4566
+aws s3 ls s3://biomarkly-uploads --endpoint-url http://localhost:4566
 ```
-"# haemol" 

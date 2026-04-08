@@ -1,0 +1,189 @@
+{
+  "anemia": {
+    "path": "models/anemia.pkl",
+    "onnx_path": "models/anemia.onnx",
+    "type": "auto",
+    "input_type": "tabular",
+    "features": [
+      "wbc",
+      "rbc",
+      "hgb",
+      "hct",
+      "mcv",
+      "mch",
+      "mchc",
+      "plt"
+    ],
+    "output_labels": [
+      "Healthy",
+      "Iron deficiency anemia",
+      "Leukemia",
+      "Leukemia with thrombocytopenia",
+      "Macrocytic anemia",
+      "Normocytic hypochromic anemia",
+      "Normocytic normochromic anemia",
+      "Other microcytic anemia",
+      "Thrombocytopenia"
+    ],
+    "version": "2026.03",
+    "metrics": {
+      "f1": 0.9730311977695905,
+      "accuracy": 0.9727626459143969,
+      "roc_auc": null
+    }
+  },
+  "diabetes": {
+    "path": "models/diabetes.pkl",
+    "onnx_path": "models/diabetes.onnx",
+    "type": "auto",
+    "input_type": "tabular",
+    "features": [
+      "GENHLTH",
+      "PHYSHLTH",
+      "MENTHLTH",
+      "HLTHPLN1",
+      "EXERANY2",
+      "CVDCRHD4",
+      "CVDSTRK3",
+      "AGE",
+      "EDUCA",
+      "SEX",
+      "SMOKE100",
+      "SMOKDAY2",
+      "_BMI5",
+      "HEALTH_RISK",
+      "CARDIO_RISK"
+    ],
+    "output_labels": [
+      "No Diabetes",
+      "Prediabetes",
+      "Diabetes"
+    ],
+    "version": "2026.03",
+    "metrics": {
+      "f1": 0.9388141636969425,
+      "accuracy": 0.9346702177659407,
+      "roc_auc": 0.9250296543792008
+    }
+  },
+  "kidney": {
+    "path": "models/kidney.pkl",
+    "onnx_path": "models/kidney.onnx",
+    "type": "auto",
+    "input_type": "tabular",
+    "features": [
+      "age",
+      "bp",
+      "sg",
+      "al",
+      "su",
+      "rbc",
+      "pc",
+      "pcc",
+      "ba",
+      "bgr",
+      "bu",
+      "sc",
+      "sod",
+      "pot",
+      "hemo",
+      "pcv",
+      "wc",
+      "rc",
+      "htn",
+      "dm",
+      "cad",
+      "appet",
+      "pe",
+      "ane"
+    ],
+    "output_labels": [
+      "No CKD",
+      "CKD"
+    ],
+    "version": "2026.03",
+    "metrics": {
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "roc_auc": 1.0
+    }
+  },
+  "liver": {
+    "path": "models/liver.pkl",
+    "onnx_path": "models/liver.onnx",
+    "type": "auto",
+    "input_type": "tabular",
+    "features": [
+      "age",
+      "gender",
+      "total_bilirubin",
+      "direct_bilirubin",
+      "alkaline_phosphotase",
+      "alamine_aminotransferase",
+      "aspartate_aminotransferase",
+      "total_protiens",
+      "albumin",
+      "albumin_and_globulin_ratio"
+    ],
+    "output_labels": [
+      "Normal",
+      "Liver Disease"
+    ],
+    "version": "2026.03",
+    "metrics": {
+      "f1": 0.7106877796532969,
+      "accuracy": 0.7264957264957265,
+      "roc_auc": 0.7597448618001417
+    }
+  },
+  "thyroid": {
+    "path": "models/thyroid.pkl",
+    "onnx_path": "models/thyroid.onnx",
+    "type": "auto",
+    "input_type": "tabular",
+    "features": [
+      "age",
+      "on_thyroxine",
+      "query_on_thyroxine",
+      "on_antithyroid_meds",
+      "sick",
+      "pregnant",
+      "thyroid_surgery",
+      "i131_treatment",
+      "query_hypothyroid",
+      "query_hyperthyroid",
+      "lithium",
+      "goitre",
+      "tumor",
+      "hypopituitary",
+      "psych",
+      "tsh_measured",
+      "tsh",
+      "t3_measured",
+      "t3",
+      "tt4_measured",
+      "tt4",
+      "t4u_measured",
+      "t4u",
+      "fti_measured",
+      "fti",
+      "tbg_measured",
+      "tbg",
+      "patient_id"
+    ],
+    "output_labels": [
+      "STMW",
+      "SVHC",
+      "SVHD",
+      "SVI",
+      "WEST",
+      "other"
+    ],
+    "version": "2026.03",
+    "metrics": {
+      "f1": 0.6793176252437266,
+      "accuracy": 0.691008174386921,
+      "roc_auc": null
+    }
+  }
+}

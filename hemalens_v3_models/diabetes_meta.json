@@ -1,0 +1,33 @@
+{
+  "model_name": "diabetes",
+  "version": "2026.03",
+  "features": [
+    "GENHLTH",
+    "PHYSHLTH",
+    "MENTHLTH",
+    "HLTHPLN1",
+    "EXERANY2",
+    "CVDCRHD4",
+    "CVDSTRK3",
+    "AGE",
+    "EDUCA",
+    "SEX",
+    "SMOKE100",
+    "SMOKDAY2",
+    "_BMI5",
+    "HEALTH_RISK",
+    "CARDIO_RISK"
+  ],
+  "labels": [
+    "No Diabetes",
+    "Prediabetes",
+    "Diabetes"
+  ],
+  "metrics": {
+    "f1": 0.9388141636969425,
+    "accuracy": 0.9346702177659407,
+    "roc_auc": 0.9250296543792008
+  },
+  "format": "sklearn_pipeline",
+  "input_type": "tabular"
+}

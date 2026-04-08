@@ -1,0 +1,31 @@
+{
+  "name": "@biomarkly/web",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@biomarkly/contracts": "file:../../packages/contracts",
+    "@biomarkly/design-tokens": "file:../../packages/design-tokens",
+    "@tanstack/react-query": "^5.59.0",
+    "i18next": "^24.2.2",
+    "next": "^14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "^15.4.1",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
+    "typescript": "^5.7.2"
+  }
+}

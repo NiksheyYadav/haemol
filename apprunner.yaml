@@ -1,0 +1,15 @@
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - docker build -f apps/api/Dockerfile -t biomarkly-api .
+run:
+  command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+  network:
+    port: 8000
+  env:
+    - name: APP_ENV
+      value: production
+    - name: AWS_REGION
+      value: ap-south-1

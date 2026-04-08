@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+coverage
+.pytest_cache
+__pycache__
+.venv
+.env
+apps/api/.mypy_cache
+apps/api/storage
+apps/api/uploads
+apps/api/.ruff_cache
+*.pyc
+*.sqlite3
+*.db

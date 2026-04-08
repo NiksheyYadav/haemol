@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install web dependencies
+        run: npm install
+      - name: Install api dependencies
+        run: pip install -r apps/api/requirements.txt
+      - name: Drift check
+        run: python scripts/check_schema_drift.py
+      - name: API tests
+        run: pytest apps/api/app/tests
+      - name: Web typecheck
+        run: npm run typecheck:web

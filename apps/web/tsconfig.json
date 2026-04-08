@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@biomarkly/contracts": [
+        "../../packages/contracts/src"
+      ],
+      "@biomarkly/design-tokens": [
+        "../../packages/design-tokens/src"
+      ],
+      "@biomarkly/locales/*": [
+        "../../packages/locales/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

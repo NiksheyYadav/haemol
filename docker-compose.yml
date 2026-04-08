@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: biomarkly
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  localstack:
+    image: localstack/localstack:3.8
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      AWS_DEFAULT_REGION: ap-south-1
+      DEBUG: "0"
+    volumes:
+      - "./scripts/localstack/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      APP_ENV: development
+      TASK_MODE: sync
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/biomarkly
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      ADMIN_METRICS_TOKEN: ${ADMIN_METRICS_TOKEN:-change-me}
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-biomarkly-uploads}
+      SARVAM_API_KEY: ${SARVAM_API_KEY:-}
+      POSTHOG_API_KEY: ${POSTHOG_API_KEY:-}
+      POSTHOG_HOST: ${POSTHOG_HOST:-https://app.posthog.com}
+    depends_on:
+      - postgres
+      - redis
+      - localstack
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      APP_ENV: development
+      TASK_MODE: sync
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/biomarkly
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      ADMIN_METRICS_TOKEN: ${ADMIN_METRICS_TOKEN:-change-me}
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-biomarkly-uploads}
+      SARVAM_API_KEY: ${SARVAM_API_KEY:-}
+      POSTHOG_API_KEY: ${POSTHOG_API_KEY:-}
+      POSTHOG_HOST: ${POSTHOG_HOST:-https://app.posthog.com}
+    depends_on:
+      - postgres
+      - redis
+      - localstack
+    volumes:
+      - ./apps/api:/app
+    command: celery -A app.tasks.celery_app.celery_app worker --loglevel=info
+
+  flower:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-biomarkly-uploads}
+    depends_on:
+      - redis
+      - localstack
+    ports:
+      - "5555:5555"
+    command: celery -A app.tasks.celery_app.celery_app flower --port=5555
+    profiles: ["ops"]
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY:-}
+      NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST:-https://app.posthog.com}
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - ./package.json:/app/package.json
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+
+volumes:
+  postgres_data:
