@@ -74,7 +74,10 @@ def request_audio(analysis_id: str, payload: AudioRequest, db: Session = Depends
         .order_by(AudioJob.created_at.desc())
         .first()
     )
-    if existing_job is not None and existing_job.status in {"pending", "done"}:
+    is_legacy_wav = bool(existing_job and existing_job.audio_url and existing_job.audio_url.endswith(".wav"))
+    if existing_job is not None and existing_job.status == "pending":
+        return {"analysis_id": analysis_id, "audio_job_id": existing_job.id, "language": payload.language}
+    if existing_job is not None and existing_job.status == "done" and not is_legacy_wav:
         return {"analysis_id": analysis_id, "audio_job_id": existing_job.id, "language": payload.language}
     job_id = _run_task(generate_audio, analysis_id, payload.language)
     capture_event(db, "audio_played", {"language": payload.language}, analysis_id=analysis_id)
