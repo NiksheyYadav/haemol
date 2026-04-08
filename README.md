@@ -9,11 +9,43 @@ For Vercel, deploy only the frontend and point it at a separately hosted Biomark
 Recommended setup:
 - Set `API_SERVER_URL=https://your-api-domain` in the Vercel project.
 - Leave `NEXT_PUBLIC_API_URL` unset in Vercel so the frontend uses the built-in `/api/backend` proxy.
-- Keep the backend deployed on App Runner, ECS, Render, Railway, or another Python host.
+- Keep the backend deployed on Render, Railway, App Runner, ECS, or another Python host.
 
 Why this matters:
 - If `NEXT_PUBLIC_API_URL` is missing and no proxy exists, the app can fall back to `localhost`, which breaks parsing and uploads in production.
 - The `/api/backend/*` rewrite keeps frontend requests same-origin on Vercel and forwards them to your real API.
+
+## Render backend deploy
+
+Biomarkly now includes a root-level [render.yaml](./render.yaml) Blueprint for deploying the FastAPI backend as a Docker web service on Render.
+
+Why this setup works well:
+- The backend binds to Render's runtime `PORT`.
+- `TASK_MODE=sync` avoids requiring a separate Celery worker just to get production parsing and analysis working.
+- The web service exposes `/health` for Render health checks.
+- Secrets stay out of Git because the required credentials are marked with `sync: false`.
+
+Render setup:
+1. Push the latest repo changes to GitHub.
+2. Open the Blueprint flow in Render and connect the repo.
+3. Fill the required secret values:
+   - `DATABASE_URL`
+   - `SECRET_KEY`
+   - `ADMIN_METRICS_TOKEN`
+   - `S3_BUCKET_NAME`
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `SARVAM_API_KEY`
+   - `POSTHOG_API_KEY`
+4. Deploy the `biomarkly-api` service.
+5. Copy the Render backend URL, for example `https://biomarkly-api.onrender.com`.
+6. In Vercel, set `API_SERVER_URL` to that Render URL.
+7. Remove `NEXT_PUBLIC_API_URL` from Vercel if it is set.
+8. Redeploy the frontend.
+
+After both deploys are live, this should work:
+- `https://biomarkly.vercel.app/api/backend/health`
+- `https://biomarkly.vercel.app/api/backend/about`
 
 ## Local development
 

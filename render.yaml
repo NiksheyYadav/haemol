@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: biomarkly-api
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - apps/api/**
+        - render.yaml
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: TASK_MODE
+        value: sync
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: POSTHOG_HOST
+        value: https://app.posthog.com
+      - key: REPORT_RETENTION_DAYS
+        value: "30"
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: ADMIN_METRICS_TOKEN
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: POSTHOG_API_KEY
+        sync: false
