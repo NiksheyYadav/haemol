@@ -54,6 +54,22 @@ def test_report_file_flow() -> None:
     assert report["extracted_params"]
 
 
+def test_report_file_storage_failure_returns_503(monkeypatch) -> None:
+    def fail_save_bytes(*args, **kwargs):
+        raise RuntimeError("S3 upload failed")
+
+    monkeypatch.setattr(storage_module.storage_service, "save_bytes", fail_save_bytes)
+
+    response = client.post(
+        "/reports",
+        files={"file": ("anemia_report.txt", b"Hemoglobin: 10.2 g/dL\nFerritin: 18 ng/mL", "text/plain")},
+        data={"locale": "en", "sex": "male", "age": "42", "consent_given": "true"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "S3 upload failed"
+
+
 def test_analysis_returns_detailed_report_and_audio_fallback() -> None:
     report_response = client.post(
         "/reports",

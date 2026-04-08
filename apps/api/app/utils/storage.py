@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import mimetypes
 import secrets
 from urllib.parse import urlparse, urlunparse
@@ -14,6 +15,8 @@ except ImportError:  # pragma: no cover
     Config = None  # type: ignore[assignment]
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def _make_client() -> BaseClient | None:
@@ -65,7 +68,11 @@ def upload_file(folder: str, file_name: str, data: bytes, content_type: str | No
     }
     if resolved_content_type.startswith("audio/"):
         put_kwargs["ContentDisposition"] = "inline"
-    client.put_object(**put_kwargs)
+    try:
+        client.put_object(**put_kwargs)
+    except Exception as exc:
+        logger.exception("S3 upload failed for key %s", key)
+        raise RuntimeError("S3 upload failed") from exc
     return _object_url(key)
 
 
@@ -79,11 +86,15 @@ def get_signed_url(storage_url: str, expires_in: int = 900) -> str:
     if guessed_content_type and guessed_content_type.startswith("audio/"):
         params["ResponseContentType"] = guessed_content_type
         params["ResponseContentDisposition"] = "inline"
-    url = client.generate_presigned_url(
-        "get_object",
-        Params=params,
-        ExpiresIn=expires_in,
-    )
+    try:
+        url = client.generate_presigned_url(
+            "get_object",
+            Params=params,
+            ExpiresIn=expires_in,
+        )
+    except Exception as exc:
+        logger.exception("S3 signed URL generation failed for key %s", key)
+        raise RuntimeError("S3 signed URL generation failed") from exc
     if settings.aws_endpoint_url and "localstack" in settings.aws_endpoint_url:
         parsed = urlparse(url)
         return urlunparse(parsed._replace(netloc="localhost:4566"))
@@ -95,7 +106,11 @@ def delete_file(storage_url: str) -> None:
     if client is None:
         raise RuntimeError("S3 is not configured")
     bucket, key = _parse_s3_url(storage_url)
-    client.delete_object(Bucket=bucket, Key=key)
+    try:
+        client.delete_object(Bucket=bucket, Key=key)
+    except Exception as exc:
+        logger.exception("S3 delete failed for key %s", key)
+        raise RuntimeError("S3 delete failed") from exc
 
 
 def read_file(storage_url: str) -> bytes:
@@ -103,5 +118,9 @@ def read_file(storage_url: str) -> bytes:
     if client is None:
         raise RuntimeError("S3 is not configured")
     bucket, key = _parse_s3_url(storage_url)
-    response = client.get_object(Bucket=bucket, Key=key)
+    try:
+        response = client.get_object(Bucket=bucket, Key=key)
+    except Exception as exc:
+        logger.exception("S3 read failed for key %s", key)
+        raise RuntimeError("S3 read failed") from exc
     return response["Body"].read()

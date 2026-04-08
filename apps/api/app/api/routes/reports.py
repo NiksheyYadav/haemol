@@ -79,7 +79,10 @@ async def create_report(
         data = await file.read()
         if len(data) > settings.upload_max_mb * 1024 * 1024:
             raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File exceeds 10MB limit")
-        storage_url = storage_service.save_bytes("reports", file.filename or "report.bin", data, file.content_type)
+        try:
+            storage_url = storage_service.save_bytes("reports", file.filename or "report.bin", data, file.content_type)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
         report = Report(
             source_type="file",
             locale=locale,
