@@ -217,7 +217,7 @@ export function ResultsView({ analysisId }: { analysisId: string }): JSX.Element
             </button>
           </div>
           {audio?.audio_url ? (
-            <audio style={{ width: "100%", marginTop: "1rem" }} controls src={audio.audio_url} />
+            <audio key={audio.audio_url} style={{ width: "100%", marginTop: "1rem" }} controls preload="metadata" src={audio.audio_url} />
           ) : (
             <p style={{ color: "var(--text-muted)" }}>{audio?.fallback_text ?? t("audio.waiting")}</p>
           )}

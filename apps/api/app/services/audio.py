@@ -6,8 +6,8 @@ import logging
 
 import requests
 
-from app.services.analysis_service import build_voice_script
 from app.core.config import settings
+from app.services.analysis_service import build_voice_script
 
 try:
     import redis
@@ -84,7 +84,7 @@ class AudioService:
                     "source_language_code": "en-IN",
                     "target_language_code": LANGUAGE_CODES.get(language, "en-IN"),
                     "speaker_gender": "Female",
-                    "mode": "formal"
+                    "mode": "formal",
                 },
                 timeout=15,
             )
@@ -105,7 +105,8 @@ class AudioService:
                     "speaker": "priya",
                     "pace": 1.0,
                     "sample_rate": 22050,
-                    "model": "bulbul:v3"
+                    "model": "bulbul:v3",
+                    "output_audio_codec": "mp3",
                 },
                 timeout=20,
             )

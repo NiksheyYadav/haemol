@@ -179,7 +179,7 @@ def generate_audio(analysis_id: str, lang: str) -> str:
             audio_bytes, fallback_text = audio_service.generate(analysis_id, lang, payload)
             job.fallback_text = fallback_text
             if audio_bytes:
-                storage_url = storage_service.save_bytes("audio", f"{analysis_id}-{lang}.wav", audio_bytes, "audio/wav")
+                storage_url = storage_service.save_bytes("audio", f"{analysis_id}-{lang}.mp3", audio_bytes, "audio/mpeg")
                 job.audio_url = storage_url
                 job.status = "done"
             else:

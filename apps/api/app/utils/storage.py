@@ -56,12 +56,16 @@ def upload_file(folder: str, file_name: str, data: bytes, content_type: str | No
         raise RuntimeError("S3 is not configured")
     safe_name = f"{secrets.token_hex(8)}-{file_name}"
     key = f"{folder}/{safe_name}"
-    client.put_object(
-        Bucket=bucket,
-        Key=key,
-        Body=data,
-        ContentType=content_type or mimetypes.guess_type(file_name)[0] or "application/octet-stream",
-    )
+    resolved_content_type = content_type or mimetypes.guess_type(file_name)[0] or "application/octet-stream"
+    put_kwargs = {
+        "Bucket": bucket,
+        "Key": key,
+        "Body": data,
+        "ContentType": resolved_content_type,
+    }
+    if resolved_content_type.startswith("audio/"):
+        put_kwargs["ContentDisposition"] = "inline"
+    client.put_object(**put_kwargs)
     return _object_url(key)
 
 
@@ -70,9 +74,14 @@ def get_signed_url(storage_url: str, expires_in: int = 900) -> str:
     if client is None:
         raise RuntimeError("S3 is not configured")
     bucket, key = _parse_s3_url(storage_url)
+    guessed_content_type = mimetypes.guess_type(key)[0]
+    params = {"Bucket": bucket, "Key": key}
+    if guessed_content_type and guessed_content_type.startswith("audio/"):
+        params["ResponseContentType"] = guessed_content_type
+        params["ResponseContentDisposition"] = "inline"
     url = client.generate_presigned_url(
         "get_object",
-        Params={"Bucket": bucket, "Key": key},
+        Params=params,
         ExpiresIn=expires_in,
     )
     if settings.aws_endpoint_url and "localstack" in settings.aws_endpoint_url:
