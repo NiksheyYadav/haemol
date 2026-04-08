@@ -40,6 +40,19 @@ def test_report_text_flow() -> None:
     assert report["extracted_params"]
 
 
+def test_report_file_flow() -> None:
+    response = client.post(
+        "/reports",
+        files={"file": ("anemia_report.txt", b"Hemoglobin: 10.2 g/dL\nFerritin: 18 ng/mL", "text/plain")},
+        data={"locale": "en", "sex": "male", "age": "42", "consent_given": "true"},
+    )
+    assert response.status_code == 200
+    report = response.json()
+    assert report["id"]
+    assert report["file_name"] == "anemia_report.txt"
+    assert report["extracted_params"]
+
+
 def test_analysis_returns_detailed_report_and_audio_fallback() -> None:
     report_response = client.post(
         "/reports",

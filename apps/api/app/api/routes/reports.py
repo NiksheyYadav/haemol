@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -63,33 +63,31 @@ def _serialize_report(report: Report) -> ReportResponse:
 
 
 @router.post("", response_model=ReportResponse, dependencies=[Depends(enforce_hourly_limit)])
-async def create_report(request: Request, db: Session = Depends(get_db), file: UploadFile | None = File(default=None)) -> ReportResponse:
+async def create_report(
+    request: Request,
+    db: Session = Depends(get_db),
+    file: UploadFile | None = File(default=None),
+    locale: str = Form("en"),
+    sex: str = Form("other"),
+    age: int = Form(0),
+    consent_given: bool = Form(False),
+) -> ReportResponse:
     content_type = request.headers.get("content-type", "")
     if "multipart/form-data" in content_type:
-        form = await request.form()
-        uploaded = file or form.get("file")
-        if uploaded is None:
+        if file is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is required")
-        if not isinstance(uploaded, UploadFile):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload")
-        payload = {
-            "locale": str(form.get("locale", "en")),
-            "sex": str(form.get("sex", "other")),
-            "age": int(form.get("age", 0)),
-            "consent_given": str(form.get("consent_given", "false")).lower() == "true",
-        }
-        data = await uploaded.read()
+        data = await file.read()
         if len(data) > settings.upload_max_mb * 1024 * 1024:
             raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File exceeds 10MB limit")
-        storage_url = storage_service.save_bytes("reports", uploaded.filename or "report.bin", data, uploaded.content_type)
+        storage_url = storage_service.save_bytes("reports", file.filename or "report.bin", data, file.content_type)
         report = Report(
             source_type="file",
-            locale=payload["locale"],
-            sex=payload["sex"],
-            age=payload["age"],
-            file_name=uploaded.filename,
+            locale=locale,
+            sex=sex,
+            age=age,
+            file_name=file.filename,
             file_url=storage_url,
-            consent_given=payload["consent_given"],
+            consent_given=consent_given,
             status="pending",
             extraction_status="pending",
             extraction_step="queued",

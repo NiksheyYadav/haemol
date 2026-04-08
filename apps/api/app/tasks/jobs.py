@@ -32,8 +32,11 @@ def run_extraction(report_id: str) -> str:
 
         if report.source_type == "file" and report.file_url:
             file_bytes = _read_bytes(report)
-            if (report.file_name or "").lower().endswith(".pdf"):
+            file_name = (report.file_name or "").lower()
+            if file_name.endswith(".pdf"):
                 raw_text = parse_pdf(file_bytes)
+            elif file_name.endswith(".txt"):
+                raw_text = file_bytes.decode("utf-8", errors="ignore")
             else:
                 report.extraction_step = "ocr"
                 db.commit()

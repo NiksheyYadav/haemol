@@ -13,6 +13,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     cache: "no-store"
   });
   if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const payload = (await response.json()) as { detail?: string };
+      throw new Error(payload.detail ?? "Request failed");
+    }
     throw new Error(await response.text());
   }
   if (response.status === 204) {
