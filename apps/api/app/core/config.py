@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import urlparse
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +34,20 @@ class Settings(BaseSettings):
     signed_url_ttl_seconds: int = 900
     storage_root: Path = Field(default_factory=lambda: Path("apps/api/storage"))
     spacy_model: str = "en_core_web_sm"
+
+    @model_validator(mode="after")
+    def validate_production_database(self) -> "Settings":
+        if self.app_env.lower() not in {"production", "prod"}:
+            return self
+
+        parsed = urlparse(self.database_url)
+        hostname = (parsed.hostname or "").lower()
+        if hostname in {"localhost", "127.0.0.1", "::1"}:
+            raise ValueError(
+                "DATABASE_URL cannot point to localhost in production. "
+                "Use a managed Postgres connection string from Render, Neon, Supabase, or RDS."
+            )
+        return self
 
 
 settings = Settings()

@@ -29,7 +29,6 @@ Render setup:
 1. Push the latest repo changes to GitHub.
 2. Open the Blueprint flow in Render and connect the repo.
 3. Fill the required secret values:
-   - `DATABASE_URL`
    - `SECRET_KEY`
    - `ADMIN_METRICS_TOKEN`
    - `S3_BUCKET_NAME`
@@ -37,11 +36,18 @@ Render setup:
    - `AWS_SECRET_ACCESS_KEY`
    - `SARVAM_API_KEY`
    - `POSTHOG_API_KEY`
-4. Deploy the `biomarkly-api` service.
-5. Copy the Render backend URL, for example `https://biomarkly-api.onrender.com`.
-6. In Vercel, set `API_SERVER_URL` to that Render URL.
-7. Remove `NEXT_PUBLIC_API_URL` from Vercel if it is set.
-8. Redeploy the frontend.
+4. Let Render create both resources:
+   - `biomarkly-api`
+   - `biomarkly-db`
+5. Deploy the Blueprint.
+6. Copy the Render backend URL, for example `https://biomarkly-api.onrender.com`.
+7. In Vercel, set `API_SERVER_URL` to that Render URL.
+8. Remove `NEXT_PUBLIC_API_URL` from Vercel if it is set.
+9. Redeploy the frontend.
+
+Important:
+- Do not manually set `DATABASE_URL` to `localhost` on Render.
+- The Blueprint now wires `DATABASE_URL` from Render Postgres using the internal connection string.
 
 After both deploys are live, this should work:
 - `https://biomarkly.vercel.app/api/backend/health`
