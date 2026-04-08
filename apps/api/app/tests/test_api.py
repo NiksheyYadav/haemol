@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.rate_limit import limiter
+from app.services import storage as storage_module
 
 
 client = TestClient(app)
@@ -93,6 +94,50 @@ def test_analysis_returns_detailed_report_and_audio_fallback() -> None:
     audio_status = audio_status_response.json()
     assert audio_status["status"] in {"done", "failed"}
     assert audio_status["fallback_text"]
+
+
+def test_audio_request_survives_storage_failure(monkeypatch) -> None:
+    report_response = client.post(
+        "/reports",
+        json={
+            "source_type": "text",
+            "locale": "en",
+            "sex": "male",
+            "age": 42,
+            "consent_given": True,
+            "raw_text": "Hemoglobin: 8.5 g/dL",
+        },
+    )
+    assert report_response.status_code == 200
+    report_id = report_response.json()["id"]
+
+    analysis_response = client.post(f"/reports/{report_id}/analyze")
+    assert analysis_response.status_code == 200
+    analysis_id = analysis_response.json()["analysis_id"]
+
+    original_key = os.environ.get("SARVAM_API_KEY")
+    os.environ["SARVAM_API_KEY"] = "test-key"
+
+    def fail_save_bytes(*args, **kwargs):
+        raise RuntimeError("storage unavailable")
+
+    monkeypatch.setattr(storage_module.storage_service, "save_bytes", fail_save_bytes)
+    monkeypatch.setattr(storage_module.settings, "sarvam_api_key", "test-key")
+    monkeypatch.setattr("app.services.audio.audio_service._tts", lambda text, language: b"fake-audio")
+
+    response = client.post(f"/analyses/{analysis_id}/audio", json={"language": "english"})
+    assert response.status_code == 200
+
+    audio_status_response = client.get(f"/analyses/{analysis_id}/audio/english")
+    assert audio_status_response.status_code == 200
+    audio_status = audio_status_response.json()
+    assert audio_status["status"] == "failed"
+    assert audio_status["fallback_text"]
+
+    if original_key is None:
+        os.environ["SARVAM_API_KEY"] = ""
+    else:
+        os.environ["SARVAM_API_KEY"] = original_key
 
 
 def test_metrics_requires_bearer() -> None:

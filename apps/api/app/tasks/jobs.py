@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.db.models import Analysis, AudioJob, AuditLog, ExtractedParam, Report
@@ -10,6 +12,8 @@ from app.services.audio import audio_service
 from app.services.reference_data import reference_range_for
 from app.services.storage import storage_service
 from app.tasks.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 
 
 def _read_bytes(report: Report) -> bytes:
@@ -169,13 +173,19 @@ def generate_audio(analysis_id: str, lang: str) -> str:
                 analysis.confidence_scores,
             ),
         }
-        audio_bytes, fallback_text = audio_service.generate(analysis_id, lang, payload)
+        fallback_text = audio_service.summarize(payload, lang)
         job = AudioJob(analysis_id=analysis_id, language=lang, status="pending", fallback_text=fallback_text)
-        if audio_bytes:
-            storage_url = storage_service.save_bytes("audio", f"{analysis_id}-{lang}.wav", audio_bytes, "audio/wav")
-            job.audio_url = storage_url
-            job.status = "done"
-        else:
+        try:
+            audio_bytes, fallback_text = audio_service.generate(analysis_id, lang, payload)
+            job.fallback_text = fallback_text
+            if audio_bytes:
+                storage_url = storage_service.save_bytes("audio", f"{analysis_id}-{lang}.wav", audio_bytes, "audio/wav")
+                job.audio_url = storage_url
+                job.status = "done"
+            else:
+                job.status = "failed"
+        except Exception:
+            logger.exception("Audio generation failed for analysis %s in %s", analysis_id, lang)
             job.status = "failed"
         db.add(job)
         db.add(AuditLog(entity_id=analysis_id, entity_type="Analysis", event="audio_generated", detail={"language": lang, "status": job.status}))
