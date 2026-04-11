@@ -1,0 +1,67 @@
+name: deploy-elastic-beanstalk
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "apps/api/**"
+      - ".github/workflows/deploy-elastic-beanstalk.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create deployment bundle
+        env:
+          BUNDLE_DIR: bundle
+        run: |
+          mkdir -p "$BUNDLE_DIR/apps"
+          cp Dockerfile "$BUNDLE_DIR/Dockerfile"
+          cp .dockerignore "$BUNDLE_DIR/.dockerignore"
+          cp -R apps/api "$BUNDLE_DIR/apps/api"
+          cd "$BUNDLE_DIR"
+          zip -r ../biomarkly-eb.zip .
+
+      - name: Upload bundle to S3
+        env:
+          VERSION_LABEL: biomarkly-${{ github.run_number }}-${{ github.sha }}
+        run: |
+          aws s3 cp biomarkly-eb.zip "s3://${{ secrets.EB_DEPLOY_BUCKET }}/$VERSION_LABEL.zip"
+
+      - name: Create Elastic Beanstalk application version
+        env:
+          VERSION_LABEL: biomarkly-${{ github.run_number }}-${{ github.sha }}
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="${{ secrets.EB_DEPLOY_BUCKET }}",S3Key="$VERSION_LABEL.zip"
+
+      - name: Deploy application version
+        env:
+          VERSION_LABEL: biomarkly-${{ github.run_number }}-${{ github.sha }}
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ secrets.EB_ENVIRONMENT_NAME }}" \
+            --version-label "$VERSION_LABEL"
+
+      - name: Wait for environment update
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names "${{ secrets.EB_ENVIRONMENT_NAME }}"

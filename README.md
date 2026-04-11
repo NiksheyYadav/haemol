@@ -79,6 +79,62 @@ Services:
 - `apprunner.yaml` is included for an AWS App Runner deployment path.
 - ECS Fargate is the main alternative if you want tighter network control or separate worker scaling; the existing API and Celery Docker images can be reused as-is.
 
+## AWS Elastic Beanstalk
+
+For the simplest first production deployment on Elastic Beanstalk, use a single Docker web environment for the API and keep:
+- Vercel for the frontend
+- Supabase or another managed Postgres for `DATABASE_URL`
+- S3 for file and audio storage
+- `TASK_MODE=sync` for the first rollout
+
+Why this setup is safest:
+- the repo now has a root-level `Dockerfile` so Elastic Beanstalk can build the API directly
+- it avoids trying to run the dev-only `docker-compose.yml`
+- it removes Redis/Celery from the first deploy so we can get the core upload, extraction, analysis, and audio flow stable first
+
+Elastic Beanstalk setup:
+1. Create a new environment and choose `Web server environment`.
+2. Use names like:
+   - application name: `biomarkly-api`
+   - environment name: `biomarkly-api-prod`
+3. Use the Docker platform.
+4. Set these environment properties in Elastic Beanstalk:
+   - `APP_ENV=production`
+   - `TASK_MODE=sync`
+   - `DATABASE_URL=<your Supabase or managed Postgres URL>`
+   - `SECRET_KEY=<strong random value>`
+   - `ADMIN_METRICS_TOKEN=<strong random value>`
+   - `AWS_ACCESS_KEY_ID=<iam access key>`
+   - `AWS_SECRET_ACCESS_KEY=<iam secret>`
+   - `AWS_REGION=ap-south-1`
+   - `S3_BUCKET_NAME=biomarkly-uploads`
+   - `SARVAM_API_KEY=<sarvam key>`
+   - `POSTHOG_API_KEY=<posthog key>`
+   - `POSTHOG_HOST=https://app.posthog.com`
+5. Do not set `DATABASE_URL` to `localhost`.
+6. After the environment is healthy, point Vercel `API_SERVER_URL` to the Elastic Beanstalk URL and redeploy the frontend.
+
+GitHub Actions auto-deploy:
+- Yes, create the Elastic Beanstalk application and environment first.
+- After that, add these GitHub repository secrets:
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+  - `AWS_REGION`
+  - `EB_APPLICATION_NAME`
+  - `EB_ENVIRONMENT_NAME`
+  - `EB_DEPLOY_BUCKET`
+- The workflow at `.github/workflows/deploy-elastic-beanstalk.yml` will:
+  - build a small source bundle with the API-only Docker setup
+  - upload it to the S3 deploy bucket
+  - create a new Elastic Beanstalk application version
+  - update the target environment automatically on pushes to `main`
+
+Recommended bucket:
+- create a dedicated private S3 bucket for deploy bundles, for example `biomarkly-eb-deploys`
+
+Recommended later improvement:
+- move to a separate worker and queue only after the single-container API is stable in production
+
 ## IAM
 
 Required AWS IAM permissions for the service account:
