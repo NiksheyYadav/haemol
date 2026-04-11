@@ -17,18 +17,23 @@ Why this matters:
 
 ## Render backend deploy
 
-Biomarkly now includes a root-level [render.yaml](./render.yaml) Blueprint for deploying the FastAPI backend as a Docker web service on Render.
+Biomarkly now includes a root-level [render.yaml](./render.yaml) Blueprint for deploying the backend on Render with:
+- a Docker web service for the FastAPI API
+- a Docker background worker for Celery jobs
+- a Render Key Value instance for Redis-compatible queueing and caching
 
 Why this setup works well:
 - The backend binds to Render's runtime `PORT`.
-- `TASK_MODE=sync` avoids requiring a separate Celery worker just to get production parsing and analysis working.
+- `TASK_MODE=async` keeps uploads and API requests fast while extraction, analysis, and audio run on the worker.
 - The web service exposes `/health` for Render health checks.
-- Secrets stay out of Git because the required credentials are marked with `sync: false`.
+- The worker reuses the API service's secrets via Blueprint references, so you enter them once.
+- The queue uses Render Key Value with `noeviction`, which is safer for background jobs than a cache-oriented eviction policy.
 
 Render setup:
 1. Push the latest repo changes to GitHub.
 2. Open the Blueprint flow in Render and connect the repo.
-3. Fill the required secret values:
+3. Fill the required secret values on `biomarkly-api`:
+   - `DATABASE_URL`
    - `SECRET_KEY`
    - `ADMIN_METRICS_TOKEN`
    - `S3_BUCKET_NAME`
@@ -36,18 +41,22 @@ Render setup:
    - `AWS_SECRET_ACCESS_KEY`
    - `SARVAM_API_KEY`
    - `POSTHOG_API_KEY`
-4. Let Render create both resources:
+4. Let Render create these resources:
    - `biomarkly-api`
-   - `biomarkly-db`
+   - `biomarkly-worker`
+   - `biomarkly-cache`
 5. Deploy the Blueprint.
-6. Copy the Render backend URL, for example `https://biomarkly-api.onrender.com`.
-7. In Vercel, set `API_SERVER_URL` to that Render URL.
-8. Remove `NEXT_PUBLIC_API_URL` from Vercel if it is set.
-9. Redeploy the frontend.
+6. Confirm the worker is running before load-testing uploads or audio.
+7. Copy the Render backend URL, for example `https://biomarkly-api.onrender.com`.
+8. In Vercel, set `API_SERVER_URL` to that Render URL.
+9. Remove `NEXT_PUBLIC_API_URL` from Vercel if it is set.
+10. Redeploy the frontend.
 
 Important:
 - Do not manually set `DATABASE_URL` to `localhost` on Render.
-- The Blueprint now wires `DATABASE_URL` from Render Postgres using the internal connection string.
+- The Blueprint assumes you are using an external Postgres database such as Supabase, Neon, or RDS.
+- `REDIS_URL`, `CELERY_BROKER_URL`, and `CELERY_RESULT_BACKEND` are wired automatically from Render Key Value.
+- If you created your current Render backend manually instead of through the Blueprint, either sync the Blueprint or create the worker and Key Value services manually with the same env values.
 
 After both deploys are live, this should work:
 - `https://biomarkly.vercel.app/api/backend/health`

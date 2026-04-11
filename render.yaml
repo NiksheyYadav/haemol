@@ -15,10 +15,23 @@ services:
       - key: APP_ENV
         value: production
       - key: TASK_MODE
-        value: sync
+        value: async
       - key: DATABASE_URL
-        fromDatabase:
-          name: biomarkly-db
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: biomarkly-cache
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: biomarkly-cache
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: keyvalue
+          name: biomarkly-cache
           property: connectionString
       - key: AWS_REGION
         value: ap-south-1
@@ -40,9 +53,91 @@ services:
         sync: false
       - key: POSTHOG_API_KEY
         sync: false
-
-databases:
-  - name: biomarkly-db
-    plan: free
-    databaseName: biomarkly
-    user: biomarkly
+  - type: worker
+    name: biomarkly-worker
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    dockerCommand: celery -A app.tasks.celery_app.celery_app worker --loglevel=info --concurrency=2
+    maxShutdownDelaySeconds: 120
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - apps/api/**
+        - render.yaml
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: TASK_MODE
+        value: async
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: DATABASE_URL
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: biomarkly-cache
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: biomarkly-cache
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: keyvalue
+          name: biomarkly-cache
+          property: connectionString
+      - key: AWS_REGION
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: AWS_REGION
+      - key: POSTHOG_HOST
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: POSTHOG_HOST
+      - key: REPORT_RETENTION_DAYS
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: REPORT_RETENTION_DAYS
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: SECRET_KEY
+      - key: S3_BUCKET_NAME
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: S3_BUCKET_NAME
+      - key: AWS_ACCESS_KEY_ID
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: AWS_ACCESS_KEY_ID
+      - key: AWS_SECRET_ACCESS_KEY
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: AWS_SECRET_ACCESS_KEY
+      - key: SARVAM_API_KEY
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: SARVAM_API_KEY
+      - key: POSTHOG_API_KEY
+        fromService:
+          type: web
+          name: biomarkly-api
+          envVarKey: POSTHOG_API_KEY
+  - type: keyvalue
+    name: biomarkly-cache
+    plan: starter
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
